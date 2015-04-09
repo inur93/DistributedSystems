@@ -8,15 +8,15 @@ public class SensorMain {
 	static int port = 9999; //Integer.parseInt(args[1]);
 	static volatile LinkedList<String> queue = new LinkedList<>();
 	static final String fileName = "temperature";
-	
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub Start a number of Sensors
 		SensorController[] sensors = new SensorController[10];
-		for (SensorController s : sensors){
-		s = new SensorController(server,port);
-		new Thread(s).start();
-		}
-		
+//		for (SensorController s : sensors){
+			SensorController s = new SensorController();
+			new Thread(s).start();
+//		}
+
 
 	}
 
