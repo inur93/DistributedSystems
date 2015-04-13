@@ -6,11 +6,8 @@ import java.net.InetAddress;
 import java.util.LinkedList;
 
 public class Publisher extends Thread{
-//	private volatile DatagramSocket senderSocket;
-
 
 	private SensorController controller;
-	//	public volatile LinkedList<InetAddress> subscribers = new LinkedList<InetAddress>();
 	public Publisher(SensorController controller) {
 		this.controller = controller;
 	}

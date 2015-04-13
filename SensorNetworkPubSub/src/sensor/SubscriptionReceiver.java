@@ -46,7 +46,7 @@ public class SubscriptionReceiver extends Thread{
 
 				this.controller.addSubscriber(receivePacket.getAddress());
 				try {
-					DatagramPacket sendPacket = new DatagramPacket(data, data.length, receivePacket.getAddress(), SensorController.ACK_SENDER_PORT);
+					DatagramPacket sendPacket = new DatagramPacket(data, data.length, receivePacket.getAddress(), 1234);
 					System.out.println(getClass().getName() + ">> ack packet to: " + sendPacket.getAddress());
 					socket.send(sendPacket);
 				} catch (IOException e) {
