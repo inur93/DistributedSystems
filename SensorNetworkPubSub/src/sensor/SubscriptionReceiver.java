@@ -4,31 +4,34 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 public class SubscriptionReceiver extends Thread{
-	private static final String DEFAULT_NAME = "255.255.255.255";
-	private static final int DEFAULT_PORT = 8888;
-	public static final String FILE_NAME = "temperature";
-	public static final String SENSOR_READY_MSG = "NEW_TEMPERATURE_SENSOR_READY";
-	public static final String SUBSCRIBER_MSG = "SUBSCRIBE";
-	public static final String SUBSCRIPTION_ACCEPTED_MSG = "SUBSCRIPTION_ACCEPTED";
-	public static final String DATA_MSG_HEADER = "DATA";
-	public static final int PACKET_SIZE = 512;
-	private DatagramSocket socket;
-	private Publisher publisher;
-	public SubscriptionReceiver(DatagramSocket socket, Publisher publisher){
-		this.socket = socket;
-		this.publisher = publisher;
+
+	//	private DatagramSocket socket;
+	private SensorController controller;
+
+	public SubscriptionReceiver(SensorController sensorController){
+		this.controller = sensorController;
 	}
 
 	@Override
 	public void run() {
-		int portOffset = 0;
-		boolean sendFailed = false;
-		byte[] data = SUBSCRIPTION_ACCEPTED_MSG.getBytes();
+		notifySubscribers();
+		receiveSubscriptions();
 
+	}
+	private void receiveSubscriptions(){
+		byte[] data = SensorController.SUBSCRIPTION_ACCEPTED_MSG.getBytes();
+		DatagramSocket socket = null;
+		try {
+			socket = new DatagramSocket(SensorController.RECEIVER_PORT);
+			socket.setBroadcast(false);
+		} catch (SocketException e1) {
+			System.err.println(getClass().getName() + ">> creating socket failed");
+		}
 		while(true){
-			byte[] receiveBuffer = new byte[PACKET_SIZE];
+			byte[] receiveBuffer = new byte[SensorController.PACKET_SIZE];
 			DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 			try {
 				System.err.println(getClass().getName() + ">> Ready to receive subscriptions");
@@ -37,29 +40,38 @@ public class SubscriptionReceiver extends Thread{
 				System.err.println(getClass().getName() + ">> Receive packet failed - IOException: " + e.getStackTrace());
 			}
 
-			System.out.println(getClass().getName() + ">> Broadcast response from subscriber: " + receivePacket.getAddress().getHostAddress());
 
 			String msg = new String(receivePacket.getData()).trim();
-			if(msg.equals(SUBSCRIBER_MSG)){
-				if(!this.publisher.subscribers.contains(receivePacket.getAddress())){
-					System.out.println("socket address: " + receivePacket.getSocketAddress());
-					this.publisher.subscribers.add(receivePacket.getAddress());
+			if(msg.equals(SensorController.TEMPERATURE_SUBSCRIBE_MSG)){
 
-					while(sendFailed){
-						try {
-							System.out.println(getClass().getName() + ">> sending subscription ack");
-							DatagramPacket sendPacket = new DatagramPacket(data, data.length, InetAddress.getByName(DEFAULT_NAME), DEFAULT_PORT+portOffset);
-							socket.send(sendPacket);
-							sendFailed = false;
-						} catch (IOException e) {
-							portOffset++;
-							sendFailed = true;
-							System.err.println("send failed");
-						}
-					}
-
+				this.controller.addSubscriber(receivePacket.getAddress());
+				try {
+					DatagramPacket sendPacket = new DatagramPacket(data, data.length, receivePacket.getAddress(), SensorController.ACK_SENDER_PORT);
+					System.out.println(getClass().getName() + ">> ack packet to: " + sendPacket.getAddress());
+					socket.send(sendPacket);
+				} catch (IOException e) {
+					System.err.println(getClass().getName() + ">> ack packet failed send to: " + receivePacket.getAddress());
+					break;
 				}
+
+
 			}
+		}
+		if(socket != null) socket.close();
+	}
+	private void notifySubscribers(){
+		DatagramSocket socket = null;
+		try{
+			socket = new DatagramSocket();
+			socket.setBroadcast(true);
+			byte[] data = SensorController.TEMPERATURE_SENSOR_READY_MSG.getBytes();
+
+			DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorController.DEFAULT_NAME), SensorController.PACKET_PORT);
+			socket.send(packet);
+			System.out.println(getClass().getName() + ">> broadcasting sensor is ready to: " + SensorController.DEFAULT_NAME);
+
+		}catch(IOException e){
+			System.err.println(getClass().getName() + ">> broadcast packet failed");
 		}
 	}
 

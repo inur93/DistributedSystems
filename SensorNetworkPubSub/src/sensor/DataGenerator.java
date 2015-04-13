@@ -16,7 +16,7 @@ public class DataGenerator extends Thread{
 					sleep(3000);
 					String data = measure();
 					ctrl.queue.push(data);
-					System.out.println("push data.. notifying");
+//					System.out.println("push data.. notifying");
 					notify();
 				} catch (InterruptedException e) {
 					e.printStackTrace();

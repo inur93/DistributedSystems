@@ -1,92 +1,39 @@
 package sensorServer;
 import java.net.*;
-import java.util.Enumeration;
-import java.io.*;
 
-import sensor.Publisher;
-import common.DiscoveryThread;
 import common.PropertyHelper;
 
 
 public class SensorServer implements Runnable{
-	private DatagramSocket socket;
-	private static final String DEFAULT_NAME = "255.255.255.255";
-	private static final int DEFAULT_PORT = 8888;
+	private Subscriber subscriber;
+
+	public static final int PACKET_PORT = 8889;
+	public static final int RECEIVER_PORT = 8888;
+	public static final int SUBSCRIPTION_PORT = 1234;
+	public static final int PACKET_SIZE = 512;
+	
+	public static final String DEFAULT_NAME = "255.255.255.255";
+	
+	public static final String TEMPERATURE_SENSOR_READY_MSG = "NEW_TEMPERATURE_SENSOR_READY";
+	public static final String TEMPERATURE_SENSOR_DATA_VAL = "TEMP_DATA";
+	public static final String SUBSCRIBE_MSG = "SUBSCRIBE_TEMPERATURE_SENSOR";
+	public static final String SUBSCRIPTION_RECEIVED_MSG = "SUBSCRIPTION_ACCEPTED";
 	
 	public static final String FILE_NAME = "temperature";
 	public static final int DATA_SIZE = 5;
+
 	
-	public static void main(String[] args){ 
-//		DiscoveryThread dt = new DiscoveryThread("TEMPERATURE_SENSOR_READY", "SUBSCRIBE");
-//		dt.run();
-		SensorServer server = new SensorServer();
-		Subscriber subscriber = new Subscriber(server);
-		new Thread(subscriber).start();
-//		SensorServer s = new SensorServer();
-//		s.run();
+	
+	public void sendSubscription(InetAddress address){
+		this.subscriber.sendSubscription(address);
 	}
 
 	public void run(){
-		Subscriber subscriber = new Subscriber(this);
+		this.subscriber = new Subscriber();
 		new Thread(subscriber).start();
 		
 		DataHandler dataHandler = new DataHandler(this);
 		new Thread(dataHandler).start();
-//		try{
-//		socket = new DatagramSocket();
-//		socket.setBroadcast(true);
-//		byte[] data = "TEST_SENDING".getBytes();
-//		try{
-//			DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(DEFAULT_NAME), DEFAULT_PORT);
-//			socket.send(packet);
-//			System.out.println(getClass().getName() + " >> Request sent to: " + DEFAULT_NAME);
-//		}catch(Exception e){
-//			System.err.println("failed to send packet");
-//		}
-//		
-//		Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-//		while(interfaces.hasMoreElements()){
-//			NetworkInterface networkInterface = interfaces.nextElement();
-//			
-//			if(networkInterface.isLoopback() || !networkInterface.isUp()){
-//				continue;
-//			}
-//			
-//			for(InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()){
-//				InetAddress broadcast = interfaceAddress.getBroadcast();
-//				if(broadcast == null){
-//					continue;
-//				}
-//				
-//				try{
-//					DatagramPacket packet = new DatagramPacket(data, data.length, broadcast, DEFAULT_PORT);
-//					socket.send(packet);
-//				}catch(Exception e){
-//					System.err.println("failed to broadcast packet");
-//				}
-//				
-//				System.out.println(getClass().getName() + " >> Request sent to: " + broadcast.getHostAddress() + "; Interface: " + networkInterface.getDisplayName());
-//				
-//			}
-//		}
-//		
-//		System.out.println(getClass().getName() + ">>> Done looping over all network interfaces. Now waiting for a reply!");
-//
-//		byte[] receiveBuffer = new byte[15000];
-//		DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-//		socket.receive(receivePacket);
-//		
-//		System.out.println(getClass().getName() + ">> Broadcast response from subscriber: " + receivePacket.getAddress().getHostAddress());
-//		
-//		String msg = new String(receivePacket.getData()).trim();
-//		if(msg.equals("TEST_RECEIVE")){
-//			System.out.println("server ip address to store: " + receivePacket.getAddress());
-//		}
-//		
-//		socket.close();
-//	}catch(IOException e){
-//		
-//	}
 	}
 
 	/**
@@ -96,12 +43,6 @@ public class SensorServer implements Runnable{
 	 * @return if not able to convert to float false will be returned else data will be saved and true returned
 	 */
 	public boolean writeToProperty(String key, String value){
-//		String value = "";
-//		for(int i = 0; i<val.length;i++){
-//			if(val[i] != '\u0000'){
-//				value = value + val[i];
-//			}
-//		}
 		value = value.replace(',', '.');
 		try{
 			Float.valueOf(value);
