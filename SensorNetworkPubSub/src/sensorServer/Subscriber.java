@@ -63,7 +63,7 @@ public class Subscriber implements Runnable{
 				System.err.println(getClass().getName() + ">> subscription failed.. trying again...");
 				subscriptionFailed = true;
 			}
-			System.out.println(getClass().getName() + ">> Packet received; data: " + new String(receivePacket.getData()));
+			System.out.println(getClass().getName() + " >> Packet received; data: " + new String(receivePacket.getData()));
 
 			String msg = new String(receivePacket.getData()).trim();
 			if(msg.equals(SensorServer.SUBSCRIPTION_RECEIVED_MSG)){

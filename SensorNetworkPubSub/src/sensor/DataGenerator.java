@@ -11,15 +11,15 @@ public class DataGenerator extends Thread{
 	@Override
 	public void run() {
 		while(true){
-		synchronized (this) {
+			synchronized (this) {
 				try {
 					sleep(3000);
 					String data = measure();
 					ctrl.queue.push(data);
-//					System.out.println("push data.. notifying");
 					notify();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+
 				}
 			}
 		}
