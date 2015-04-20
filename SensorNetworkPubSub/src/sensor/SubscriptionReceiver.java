@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.Enumeration;
 
 public class SubscriptionReceiver extends Thread{
 
@@ -17,8 +20,14 @@ public class SubscriptionReceiver extends Thread{
 
 	@Override
 	public void run() {
-		notifySubscribers();
+		while(true){
+		try {
+			notifySubscribers();
+		} catch (SocketException e) {
+			System.err.println(getClass().getName() + ">> notify subscribers failed");
+		}
 		receiveSubscriptions();
+		}
 
 	}
 	private void receiveSubscriptions(){
@@ -59,20 +68,61 @@ public class SubscriptionReceiver extends Thread{
 		}
 		if(socket != null) socket.close();
 	}
-	private void notifySubscribers(){
+	private void notifySubscribers() throws SocketException{
 		DatagramSocket socket = null;
+		byte[] data = SensorController.TEMPERATURE_SENSOR_READY_MSG.getBytes();
+		DatagramPacket packet = null;
 		try{
 			socket = new DatagramSocket();
 			socket.setBroadcast(true);
-			byte[] data = SensorController.TEMPERATURE_SENSOR_READY_MSG.getBytes();
 
-			DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorController.DEFAULT_NAME), SensorController.PACKET_PORT);
+
+			packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorController.DEFAULT_NAME), SensorController.PACKET_PORT);
 			socket.send(packet);
 			System.out.println(getClass().getName() + ">> broadcasting sensor is ready to: " + SensorController.DEFAULT_NAME);
 
 		}catch(IOException e){
 			System.err.println(getClass().getName() + ">> broadcast packet failed");
-		}
+		}	
+		
+		  // Broadcast the message over all the network interfaces
+		
+		  Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+		
+		  while (interfaces.hasMoreElements()) {
+		
+		    NetworkInterface networkInterface = interfaces.nextElement();	 
+		
+		    if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+		
+		      continue; // Don't want to broadcast to the loopback interface
+		
+		    }
+		
+		    for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+		
+		      InetAddress broadcast = interfaceAddress.getBroadcast();
+		
+		      if (broadcast == null) {
+		        continue;
+		      }
+		
+		      // Send the broadcast package!
+		
+		      try {
+		
+		        socket.send(packet);
+		
+		      } catch (IOException e) {
+		    	  System.err.println(getClass().getName() + ">> failed to send packet");
+		      }
+	
+		      System.out.println(getClass().getName() + ">>> Request packet sent to: " + broadcast.getHostAddress() + "; Interface: " + networkInterface.getDisplayName());
+		
+		    }
+	
+		  }
+
 	}
 
 }
