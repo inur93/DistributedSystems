@@ -8,10 +8,10 @@ import java.net.InetAddress;
 
 public class DataHandler implements Runnable{
 
-	private SensorServer sensorServer;
-
-	public DataHandler(SensorServer sensorServer) {
-		this.sensorServer = sensorServer;
+	private SensorServerController controller;
+	public DataHandler(SensorServerController sensorServer) {
+		this.controller = sensorServer;
+	
 	}
 
 	@Override
@@ -28,16 +28,16 @@ public class DataHandler implements Runnable{
 
 	private void receiveData() throws IOException{
 
-		DatagramSocket socket = new DatagramSocket(SensorServer.RECEIVER_PORT, InetAddress.getByName("0.0.0.0"));
+		DatagramSocket socket = new DatagramSocket(SensorServerController.RECEIVER_PORT, InetAddress.getByName("0.0.0.0"));
 
 		int key = 0;
 
 		socket.setSoTimeout(0);
-		socket.setBroadcast(false);
+		socket.setBroadcast(true);
 		while(true){
 			DatagramPacket receivePacket = null;
 			try{
-			byte[] receiveBuffer = new byte[SensorServer.PACKET_SIZE];
+			byte[] receiveBuffer = new byte[SensorServerController.PACKET_SIZE];
 			receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 			socket.receive(receivePacket);
 			} catch (IOException e){
@@ -48,18 +48,18 @@ public class DataHandler implements Runnable{
 
 			dataMsg = dataMsg.replace(",", ".");
 
-			System.out.println(getClass().getName() + ">> data msg: " + dataMsg);
+			controller.writeToLog(getClass().getSimpleName() + ">> data in: " + dataMsg);
 
-			if(dataMsg.contains(SensorServer.TEMPERATURE_SENSOR_DATA_VAL)){
+			if(dataMsg.contains(SensorServerController.TEMPERATURE_SENSOR_DATA_VAL)){
 
-				dataMsg = dataMsg.replace(SensorServer.TEMPERATURE_SENSOR_DATA_VAL, "");
+				dataMsg = dataMsg.replace(SensorServerController.TEMPERATURE_SENSOR_DATA_VAL, "");
 				dataMsg = dataMsg.replace("_", "");
-				this.sensorServer.writeToProperty(String.valueOf(key), dataMsg);
+				this.controller.writeToProperty(String.valueOf(key), dataMsg);
 				key++;
 
-			}else if(dataMsg.equals(SensorServer.TEMPERATURE_SENSOR_READY_MSG)){
-				System.out.println(getClass().getName() + " >> Sending subscription to: " + receivePacket.getAddress());
-				sensorServer.sendSubscription(receivePacket.getAddress());
+			}else if(dataMsg.equals(SensorServerController.TEMPERATURE_SENSOR_READY_MSG)){
+				controller.writeToLog(getClass().getSimpleName() + " >> Sending subscription to: " + receivePacket.getAddress());
+				controller.sendSubscription(receivePacket.getAddress());
 			}
 		}
 		if(socket != null) socket.close();

@@ -4,7 +4,7 @@ import java.net.*;
 import common.PropertyHelper;
 
 
-public class SensorServer implements Runnable{
+public class SensorServerController implements Runnable{
 	private Subscriber subscriber;
 
 	public static final int PACKET_PORT = 8889;
@@ -21,19 +21,46 @@ public class SensorServer implements Runnable{
 	
 	public static final String FILE_NAME = "temperature";
 	public static final int DATA_SIZE = 5;
-
+	private Thread dataHandlerThread;
+	private Thread subscriberThread;
 	
+	
+	
+	private ServerGUIController guiCtrl;
+	private DatagramSocket receiverSocket;
+	private DatagramSocket senderSocket;
+	private DatagramSocket listenerSocket;
+	public SensorServerController(){
+		this.guiCtrl = new ServerGUIController(this);
+	}
 	
 	public void sendSubscription(InetAddress address){
 		this.subscriber.sendSubscription(address);
 	}
 
 	public void run(){
-		this.subscriber = new Subscriber();
-		new Thread(subscriber).start();
-		
+		this.subscriber = new Subscriber(this);
+		this.subscriberThread = new Thread(subscriber);
+		this.subscriberThread.start();
 		DataHandler dataHandler = new DataHandler(this);
-		new Thread(dataHandler).start();
+		this.dataHandlerThread = new Thread(dataHandler);
+		this.dataHandlerThread.start();
+	}
+	
+	public void restartServer(){
+		try{
+		subscriberThread.interrupt();
+		dataHandlerThread.interrupt();
+		}catch(Exception e){
+			guiCtrl.writeToLog(getClass().getSimpleName() + ">> restarting server...");
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		run();
 	}
 
 	/**
@@ -51,5 +78,10 @@ public class SensorServer implements Runnable{
 		}		
 		PropertyHelper.writeToProperty(FILE_NAME, key, value);
 		return true;
+	}
+
+	public synchronized void writeToLog(String msg) {
+		this.guiCtrl.writeToLog(msg);
+		
 	}
 }

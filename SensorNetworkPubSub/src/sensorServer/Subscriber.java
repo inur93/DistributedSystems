@@ -1,13 +1,15 @@
 package sensorServer;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
 
 
 public class Subscriber implements Runnable{
 
-	public Subscriber() {
-
+	private SensorServerController controller;
+	public Subscriber(SensorServerController controller) {
+		this.controller = controller;
 	}
 	@Override
 	public void run() {
@@ -18,62 +20,41 @@ public class Subscriber implements Runnable{
 		try{
 			DatagramSocket socket = new DatagramSocket();
 			socket.setBroadcast(true);
-			byte[] data = SensorServer.SUBSCRIBE_MSG.getBytes();
+			byte[] data = SensorServerController.SUBSCRIBE_MSG.getBytes();
 			try{
-				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServer.DEFAULT_NAME), SensorServer.PACKET_PORT);
+				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServerController.DEFAULT_NAME), SensorServerController.PACKET_PORT);
 				socket.send(packet);
-				System.out.println(getClass().getName() + ">> Request sent to: " + SensorServer.DEFAULT_NAME);
+			
+				controller.writeToLog(getClass().getSimpleName() + ">> Request sent to: " + SensorServerController.DEFAULT_NAME);
 			}catch(IOException e){
-				System.err.println(getClass().getName() + ">> failed to send packet");
+				controller.writeToLog(getClass().getSimpleName() + ">> failed to send packet");
 			}
 			socket.close();
 		}catch(SocketException e){}
 		
 	}
 
-	public void sendSubscription(InetAddress address){
-		boolean subscriptionFailed = true;
-		DatagramSocket socket = null;
-		int tries = 0;
-		byte[] data = SensorServer.SUBSCRIBE_MSG.getBytes();
+	public void sendSubscription(InetAddress address){		
+		Socket socket = null;
+		
 		try {
-			socket = new DatagramSocket(SensorServer.SUBSCRIPTION_PORT);
-			socket.setBroadcast(true);
-			socket.setSoTimeout(0);
-		} catch (SocketException e1) {
-			e1.printStackTrace();
+			socket = new Socket(address, 8889);// SensorServer.SUBSCRIPTION_PORT);
+		} catch (IOException e) {
+			System.err.println("socket create error");
 		}
-		while(subscriptionFailed && tries < 10){
-			System.out.println(getClass().getName() + ">> subscription try: " + tries);
-			try{
-				DatagramPacket packet = new DatagramPacket(data, data.length, address, SensorServer.PACKET_PORT);
-				socket.send(packet);
-				System.out.println(getClass().getName() + ">> subscription sent to: " + address);
-			}catch(Exception e){
-				System.err.println(getClass().getName() + ">> failed to send subscription packet");
-			}
-
-			DatagramPacket receivePacket = null;
-			try{
-				byte[] receiveBuffer = new byte[SensorServer.PACKET_SIZE];
-				System.out.println(getClass().getName() + ">> waiting for ack on port: " + socket.getLocalSocketAddress());
-				receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-				socket.receive(receivePacket);
-			}catch(IOException e){
-				System.err.println(getClass().getName() + ">> subscription failed.. trying again...");
-				subscriptionFailed = true;
-			}
-			System.out.println(getClass().getName() + " >> Packet received; data: " + new String(receivePacket.getData()));
-
-			String msg = new String(receivePacket.getData()).trim();
-			if(msg.equals(SensorServer.SUBSCRIPTION_RECEIVED_MSG)){
-				subscriptionFailed = false;
-				System.out.println(getClass().getName()+ ">> subscribed address: " + receivePacket.getAddress().getHostAddress());
-			}else{
-				subscriptionFailed = true;
-			}
-
-			tries++;
+		DataOutputStream dos = null;
+		try {
+			dos = new DataOutputStream(socket.getOutputStream());
+		} catch (IOException e) {
+			System.err.println("dos create error");
+		}
+		byte[] data = SensorServerController.SUBSCRIBE_MSG.getBytes();
+		try {
+			dos.write(data);
+			this.controller.writeToLog(getClass().getSimpleName() + ">> sent subscription: " + socket.getRemoteSocketAddress());
+			socket.setSoTimeout(0);
+		} catch (IOException e) {
+			System.err.println("write socket error");
 		}
 	}
 

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 public class SensorController implements Runnable {
 	public volatile LinkedList<String> queue = new LinkedList<String>();
 	private volatile LinkedList<InetAddress> subscribers = new LinkedList<InetAddress>(); 
-
+	private SensorGUI gui;
 	private Thread datagenThread;
 	private Publisher publisher;
 	private Thread subscriptionReceiver;
@@ -20,7 +20,7 @@ public class SensorController implements Runnable {
 
 	public static final String TEMPERATURE_SENSOR_READY_MSG = "NEW_TEMPERATURE_SENSOR_READY";
 	public static final String TEMPERATURE_SUBSCRIBE_MSG = "SUBSCRIBE_TEMPERATURE_SENSOR";
-	public static final String SUBSCRIPTION_ACCEPTED_MSG = "SUBSCRIPTION_ACCEPTED";
+//	public static final String SUBSCRIPTION_ACCEPTED_MSG = "SUBSCRIPTION_ACCEPTED";
 	public static final String TEMPERATURE_SENSOR_DATA_VAL = "TEMP_DATA";
 
 	public static final int PACKET_SIZE = 512;
@@ -28,7 +28,8 @@ public class SensorController implements Runnable {
 
 
 	public SensorController() {
-
+		this.gui = new SensorGUI(this);
+		new Thread(this.gui).start();
 	}
 	@SuppressWarnings("unchecked")
 	public synchronized LinkedList<InetAddress> getSubscribers(){
@@ -38,9 +39,10 @@ public class SensorController implements Runnable {
 		if(!subscribers.contains(socketAddress)) subscribers.add(socketAddress);
 	}
 
-	public void publish(){
-		while(!queue.isEmpty()){
+	public synchronized void publish(){
+		while(!queue.isEmpty() && !subscribers.isEmpty()){
 			String val =this.queue.pop();
+			addMsgToLog(getClass().getSimpleName() + ">> publish: " + val);
 			this.publisher.publish(val);
 		}
 
@@ -58,19 +60,18 @@ public class SensorController implements Runnable {
 		this.datagenThread = new DataGenerator(this);
 		this.datagenThread.start();
 
-		// publishing when list is not empty
-		while(true){
-			synchronized (datagenThread) {
-				try{
-					datagenThread.wait();
-				}catch (InterruptedException e) {
-					System.err.println("interruptexception");
-				}
-			}
-			// publishing all measurements in queue
-			publish();
-		}
-
+	}
+	public synchronized void addMsgToLog(String msg){
+		this.gui.addMsgToLog(msg);
+	}
+	
+	public void shutdownSensor() {
+		// TODO Auto-generated method stub
+		
+	}
+	public void restartSensor() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
