@@ -1,6 +1,5 @@
 package sensorServer;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
 
@@ -8,7 +7,9 @@ import java.net.*;
 public class Subscriber implements Runnable{
 
 	private SensorServerController controller;
-	public Subscriber(SensorServerController controller) {
+	private String topic;
+	public Subscriber(String topic, SensorServerController controller) {
+		this.topic = topic;
 		this.controller = controller;
 	}
 	@Override
@@ -20,7 +21,7 @@ public class Subscriber implements Runnable{
 		try{
 			DatagramSocket socket = new DatagramSocket();
 			socket.setBroadcast(true);
-			byte[] data = SensorServerController.SUBSCRIBE_MSG.getBytes();
+			byte[] data = (this.topic + "SUBSCRIBE;").getBytes();
 			try{
 				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServerController.DEFAULT_NAME), SensorServerController.PACKET_PORT);
 				socket.send(packet);
@@ -35,27 +36,35 @@ public class Subscriber implements Runnable{
 	}
 
 	public void sendSubscription(InetAddress address){		
-		Socket socket = null;
+//		Socket socket = null;
+		DatagramSocket socket = null;
+		DatagramPacket packet = null;
+		try {
+			socket = new DatagramSocket(); // SensorServerController.SUBSCRIPTION_PORT
 		
-		try {
-			socket = new Socket(address, 8889);// SensorServer.SUBSCRIPTION_PORT);
 		} catch (IOException e) {
-			System.err.println("socket create error");
+			controller.writeToLog(getClass().getSimpleName() + ">> failed to instantiate new socket");
+			System.err.println(e.getLocalizedMessage());
+			return;
 		}
-		DataOutputStream dos = null;
+
+		byte[] data = (this.topic + "SUBSCRIBE;") .getBytes();
 		try {
-			dos = new DataOutputStream(socket.getOutputStream());
-		} catch (IOException e) {
-			System.err.println("dos create error");
-		}
-		byte[] data = SensorServerController.SUBSCRIBE_MSG.getBytes();
-		try {
-			dos.write(data);
-			this.controller.writeToLog(getClass().getSimpleName() + ">> sent subscription: " + socket.getRemoteSocketAddress());
-			socket.setSoTimeout(0);
+//			Thread.sleep(3000);
+			packet = new DatagramPacket(data, data.length, address, SensorServerController.PACKET_PORT); // InetAddress.getByName("10.16.175.255")
+
+			socket.send(packet);
+			this.controller.writeToLog(getClass().getSimpleName() + ">> packet data: " + new String(packet.getData()));
+
+			this.controller.writeToLog(getClass().getSimpleName() + ">> sent subscription: " + packet.getSocketAddress());
+			socket.close();
 		} catch (IOException e) {
 			System.err.println("write socket error");
-		}
+		} 
+//		catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 
 }

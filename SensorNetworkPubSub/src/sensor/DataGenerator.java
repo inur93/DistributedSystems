@@ -10,7 +10,7 @@ public class DataGenerator extends Thread{
 	}
 	@Override
 	public void run() {
-		while(true){
+		while(!this.ctrl.terminate){
 			synchronized (this) {
 				try {
 					sleep(3000);
@@ -38,8 +38,7 @@ public class DataGenerator extends Thread{
 
 	// Convert to char array, in format '_''x''y''.''z''_'
 	String convert(float temp) {
-		String tempString = "_" + String.format("%.2f", temp) + "_";
-		//char[] tempArray = tempString.toCharArray();
+		String tempString = String.format("%.2f", temp) + ";";
 
 		return tempString;
 	}

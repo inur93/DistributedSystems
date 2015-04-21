@@ -21,12 +21,12 @@ public class SensorGUI extends JFrame implements ActionListener, Runnable{
 		this.controller = controller;
 		getContentPane().setLayout(null);
 		setTitle("sensor log");
-		setBounds(550, 100, 400, 480);
+		setBounds(550, 100, 500, 680);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(12, 13, 358, 339);
+		scrollPane.setBounds(12, 13, 458, 571);
 		getContentPane().add(scrollPane);
 		
 		this.sensorLog = new JList<Object>();
@@ -35,13 +35,13 @@ public class SensorGUI extends JFrame implements ActionListener, Runnable{
 		JButton btnRestart = new JButton("Restart");
 		btnRestart.setActionCommand("restart");
 		btnRestart.addActionListener(this);
-		btnRestart.setBounds(12, 365, 157, 25);
+		btnRestart.setBounds(12, 597, 157, 25);
 		getContentPane().add(btnRestart);
 		
 		JButton btnShutdown = new JButton("Shut down");
 		btnShutdown.setActionCommand("shutdown");
 		btnShutdown.addActionListener(this);
-		btnShutdown.setBounds(205, 365, 165, 25);
+		btnShutdown.setBounds(305, 597, 165, 25);
 		getContentPane().add(btnShutdown);
 		// TODO Auto-generated constructor stub
 	}

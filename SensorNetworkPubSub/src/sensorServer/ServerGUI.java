@@ -19,17 +19,17 @@ public class ServerGUI extends JFrame implements ActionListener, Runnable{
 	private static final long serialVersionUID = 1L;
 	private JList<Object> serverLog;
 	private ArrayList<String> logData = new ArrayList<String>();
-	private ServerGUIController controller;
+	private SensorServerController controller;
 	
-	public ServerGUI(ServerGUIController controller) {
+	public ServerGUI(SensorServerController controller) {
 		this.controller = controller;
 		getContentPane().setLayout(null);
 		setTitle("Server log");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setBounds(100, 100, 400, 480);
+		setBounds(100, 100, 500, 680);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setViewportBorder(null);
-		scrollPane.setBounds(12, 13, 358, 319);
+		scrollPane.setBounds(12, 13, 458, 571);
 		getContentPane().add(scrollPane);
 		
 		this.serverLog = new JList<Object>();
@@ -38,11 +38,11 @@ public class ServerGUI extends JFrame implements ActionListener, Runnable{
 		JButton btnRestart = new JButton("Restart");
 		btnRestart.setActionCommand("restart");
 		btnRestart.addActionListener(this);
-		btnRestart.setBounds(12, 345, 150, 25);
+		btnRestart.setBounds(12, 597, 150, 25);
 		getContentPane().add(btnRestart);
 		
 		JButton btnShutdown = new JButton("Shut down");
-		btnShutdown.setBounds(244, 345, 126, 25);
+		btnShutdown.setBounds(344, 597, 126, 25);
 		btnShutdown.setActionCommand("shutdown");
 		btnShutdown.addActionListener(this);
 		getContentPane().add(btnShutdown);
@@ -53,7 +53,7 @@ public class ServerGUI extends JFrame implements ActionListener, Runnable{
 	public void actionPerformed(ActionEvent e) {
 		switch(e.getActionCommand()){
 		case "shutdown":
-			controller.shutdownServer();
+			controller.shutDownServer();
 			break;
 		case "restart":
 			controller.restartServer();

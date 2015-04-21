@@ -14,24 +14,37 @@ public class SensorServerController implements Runnable{
 	
 	public static final String DEFAULT_NAME = "255.255.255.255";
 	
-	public static final String TEMPERATURE_SENSOR_READY_MSG = "NEW_TEMPERATURE_SENSOR_READY";
-	public static final String TEMPERATURE_SENSOR_DATA_VAL = "TEMP_DATA";
-	public static final String SUBSCRIBE_MSG = "SUBSCRIBE_TEMPERATURE_SENSOR";
-	public static final String SUBSCRIPTION_RECEIVED_MSG = "SUBSCRIPTION_ACCEPTED";
+	public static final String TEMP_TOPIC = "TEMP;";
+	public static final String TEMP_READY = "READY;";
+	public static final String TEMP_BROADCAST_EVENT = "TEMP;READY;";
+	public static final String TEMP_SUBSCRIBE_EVENT = "TEMP;SUBSCRIBE;";
 	
 	public static final String FILE_NAME = "temperature";
 	public static final int DATA_SIZE = 5;
+
+
 	private Thread dataHandlerThread;
 	private Thread subscriberThread;
 	
 	
 	
-	private ServerGUIController guiCtrl;
+	private ServerGUI gui;
+	public volatile boolean terminate = false;
 	private DatagramSocket receiverSocket;
 	private DatagramSocket senderSocket;
 	private DatagramSocket listenerSocket;
 	public SensorServerController(){
-		this.guiCtrl = new ServerGUIController(this);
+		this.gui = new ServerGUI(this);
+		new Thread(this.gui).start();
+		try {
+			this.receiverSocket = new DatagramSocket(SensorServerController.RECEIVER_PORT, InetAddress.getByName("0.0.0.0"));
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void sendSubscription(InetAddress address){
@@ -39,29 +52,37 @@ public class SensorServerController implements Runnable{
 	}
 
 	public void run(){
-		this.subscriber = new Subscriber(this);
+		terminate = false;
+		this.subscriber = new Subscriber(TEMP_TOPIC, this);
 		this.subscriberThread = new Thread(subscriber);
 		this.subscriberThread.start();
-		DataHandler dataHandler = new DataHandler(this);
+		DataHandler dataHandler = new DataHandler(this, this.receiverSocket);
 		this.dataHandlerThread = new Thread(dataHandler);
 		this.dataHandlerThread.start();
 	}
 	
+	public void shutDownServer(){
+		terminate = true;
+	}
 	public void restartServer(){
-		try{
-		subscriberThread.interrupt();
-		dataHandlerThread.interrupt();
-		}catch(Exception e){
-			guiCtrl.writeToLog(getClass().getSimpleName() + ">> restarting server...");
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		}
+		terminate = true;
+		
+//		try{
+//		subscriberThread.interrupt();
+//		dataHandlerThread.interrupt();
+//		}catch(Exception e){
+//			gui.addMsgToLog(getClass().getSimpleName() + ">> restarting server...");
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//		}
 		run();
 	}
+	
+	
 
 	/**
 	 * verifies input and write data to file
@@ -81,7 +102,7 @@ public class SensorServerController implements Runnable{
 	}
 
 	public synchronized void writeToLog(String msg) {
-		this.guiCtrl.writeToLog(msg);
-		
+		this.gui.addMsgToLog(msg);
 	}
+	
 }
