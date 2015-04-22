@@ -15,7 +15,7 @@ public class SensorController implements Runnable {
 	
 	public volatile boolean terminate = false;
 
-	public static final String DEFAULT_NAME = "255.255.255.255";
+	public static final String DEFAULT_NAME =  "192.168.10.255";//"255.255.255.255"; //
 	public static final int RECEIVER_PORT = 8889;
 	public static final int PACKET_PORT = 8888;
 
@@ -53,12 +53,17 @@ public class SensorController implements Runnable {
 	}
 
 	public synchronized void publish(){
+		try{
 		while(!queue.isEmpty() && !subscribers.isEmpty()){
+			
 			String val =this.queue.pop();
 			addMsgToLog(getClass().getSimpleName() + ">> publish: " + val);
 			this.publisher.publish(val);
+			
 		}
-
+		}catch(Exception e){
+			return;
+		}
 
 	}
 	public void run(){
