@@ -2,6 +2,7 @@ package sensorServer;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.Enumeration;
 
 
 public class Subscriber implements Runnable{
@@ -25,7 +26,22 @@ public class Subscriber implements Runnable{
 			try{
 				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServerController.DEFAULT_NAME), SensorServerController.PACKET_PORT);
 				socket.send(packet);
-			
+				
+//				Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
+//				while(net.hasMoreElements()){
+//					NetworkInterface i = net.nextElement();
+//					if(i.isLoopback() || i.isUp()){
+//						continue;
+//					}
+//					System.out.println(socket.getLocalSocketAddress());
+//					System.out.println(socket.getInetAddress());
+//					System.out.println(socket.getRemoteSocketAddress());
+//					System.out.println("ip: " + net.nextElement().getDisplayName());
+////					System.out.println("interface: " + i.getInetAddresses().nextElement().getCanonicalHostName());
+//					System.out.println("bum: " + i.getInterfaceAddresses());
+//				
+//				net.nextElement();
+//				}
 				controller.writeToLog(getClass().getSimpleName() + ">> Request sent to: " + SensorServerController.DEFAULT_NAME);
 			}catch(IOException e){
 				controller.writeToLog(getClass().getSimpleName() + ">> failed to send packet");
@@ -35,7 +51,7 @@ public class Subscriber implements Runnable{
 		
 	}
 
-	public void sendSubscription(InetAddress address){		
+	public void subscribe(InetAddress address){		
 //		Socket socket = null;
 		DatagramSocket socket = null;
 		DatagramPacket packet = null;
@@ -50,7 +66,6 @@ public class Subscriber implements Runnable{
 
 		byte[] data = (this.topic + "SUBSCRIBE;") .getBytes();
 		try {
-//			Thread.sleep(3000);
 			packet = new DatagramPacket(data, data.length, address, SensorServerController.PACKET_PORT); // InetAddress.getByName("10.16.175.255")
 
 			socket.send(packet);

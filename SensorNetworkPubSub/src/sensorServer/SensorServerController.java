@@ -12,7 +12,7 @@ public class SensorServerController implements Runnable{
 	public static final int SUBSCRIPTION_PORT = 1234;
 	public static final int PACKET_SIZE = 512;
 	
-	public static final String DEFAULT_NAME = "255.255.255.255";
+	public static final String DEFAULT_NAME = "192.168.255.255";// "255.255.255.255";
 	
 	public static final String TEMP_TOPIC = "TEMP;";
 	public static final String TEMP_READY = "READY;";
@@ -48,7 +48,7 @@ public class SensorServerController implements Runnable{
 	}
 	
 	public void sendSubscription(InetAddress address){
-		this.subscriber.sendSubscription(address);
+		this.subscriber.subscribe(address);
 	}
 
 	public void run(){
