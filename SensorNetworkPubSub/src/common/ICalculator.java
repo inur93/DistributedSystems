@@ -2,7 +2,6 @@ package common;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.sql.Timestamp;
 
 public interface ICalculator extends Remote {
 	public static final String calcName = "Calculator";

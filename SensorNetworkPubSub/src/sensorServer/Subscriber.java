@@ -2,7 +2,8 @@ package sensorServer;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.Enumeration;
+
+import common.Constants;
 
 
 public class Subscriber implements Runnable{
@@ -15,71 +16,50 @@ public class Subscriber implements Runnable{
 	}
 	@Override
 	public void run() {
-		notifyNodes();
+//		broadcast(topic + SensorServerController.SUBSCRIBE_EVENT);
 	}
 
-	public void notifyNodes(){
-		try{
-			DatagramSocket socket = new DatagramSocket();
-			socket.setBroadcast(true);
-			byte[] data = (this.topic + "SUBSCRIBE;").getBytes();
-			try{
-				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServerController.DEFAULT_NAME), SensorServerController.PACKET_PORT);
-				socket.send(packet);
-				
-//				Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
-//				while(net.hasMoreElements()){
-//					NetworkInterface i = net.nextElement();
-//					if(i.isLoopback() || i.isUp()){
-//						continue;
-//					}
-//					System.out.println(socket.getLocalSocketAddress());
-//					System.out.println(socket.getInetAddress());
-//					System.out.println(socket.getRemoteSocketAddress());
-//					System.out.println("ip: " + net.nextElement().getDisplayName());
-////					System.out.println("interface: " + i.getInetAddresses().nextElement().getCanonicalHostName());
-//					System.out.println("bum: " + i.getInterfaceAddresses());
-//				
-//				net.nextElement();
-//				}
-				controller.writeToLog(getClass().getSimpleName() + ">> Request sent to: " + SensorServerController.DEFAULT_NAME);
-			}catch(IOException e){
-				controller.writeToLog(getClass().getSimpleName() + ">> failed to send packet");
-			}
-			socket.close();
-		}catch(SocketException e){}
-		
-	}
+//	public void broadcast(String event){
+//		try{
+//			DatagramSocket socket = new DatagramSocket();
+//			socket.setBroadcast(true);
+//			byte[] data = (event).getBytes();
+//			try{
+//				DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(SensorServerController.DEFAULT_NAME), SensorServerController.PACKET_PORT);
+//				socket.send(packet);
+//				controller.writeToLog(getClass().getSimpleName() + ">> Request sent to: " + SensorServerController.DEFAULT_NAME);
+//			}catch(IOException e){
+//				controller.writeToLog(getClass().getSimpleName() + ">> failed to send packet");
+//			}
+//
+//			socket.close();
+//		}catch(SocketException e){}
+//
+//	}
 
-	public void subscribe(InetAddress address){		
-//		Socket socket = null;
+	public void subscribe(InetAddress address){	
 		DatagramSocket socket = null;
 		DatagramPacket packet = null;
 		try {
-			socket = new DatagramSocket(); // SensorServerController.SUBSCRIPTION_PORT
-		
+			socket = new DatagramSocket();
+
 		} catch (IOException e) {
 			controller.writeToLog(getClass().getSimpleName() + ">> failed to instantiate new socket");
 			System.err.println(e.getLocalizedMessage());
 			return;
 		}
 
-		byte[] data = (this.topic + "SUBSCRIBE;") .getBytes();
+		byte[] data = (this.topic + Constants.SUBSCRIBE_EVENT) .getBytes();
 		try {
-			packet = new DatagramPacket(data, data.length, address, SensorServerController.PACKET_PORT); // InetAddress.getByName("10.16.175.255")
+			packet = new DatagramPacket(data, data.length, address, Constants.PUBLISHER_PORT); // InetAddress.getByName("10.16.175.255 
 
 			socket.send(packet);
-			this.controller.writeToLog(getClass().getSimpleName() + ">> packet data: " + new String(packet.getData()));
 
-			this.controller.writeToLog(getClass().getSimpleName() + ">> sent subscription: " + packet.getSocketAddress());
+			this.controller.writeToLog(getClass().getSimpleName() + ">> sent subscribe event to: " + packet.getSocketAddress() + " packet data: "+ new String(packet.getData()));
 			socket.close();
 		} catch (IOException e) {
 			System.err.println("write socket error");
 		} 
-//		catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 	}
 
 }

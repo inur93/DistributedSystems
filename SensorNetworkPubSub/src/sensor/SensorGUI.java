@@ -21,7 +21,7 @@ public class SensorGUI extends JFrame implements ActionListener, Runnable{
 		this.controller = controller;
 		getContentPane().setLayout(null);
 		setTitle("sensor log");
-		setBounds(550, 100, 500, 680);
+		setBounds(600, 100, 500, 680);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		

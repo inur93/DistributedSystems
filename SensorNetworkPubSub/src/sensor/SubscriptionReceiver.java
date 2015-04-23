@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;import java.net.SocketException;
 
+import common.Constants;
+
 public class SubscriptionReceiver implements Runnable{
 
 	private DatagramSocket socket;
@@ -26,7 +28,7 @@ public class SubscriptionReceiver implements Runnable{
 		} 
 
 		while(!controller.terminate){
-			byte[] receiveBuffer = new byte[SensorController.PACKET_SIZE];
+			byte[] receiveBuffer = new byte[Constants.PACKET_SIZE];
 			DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 			try {
 				controller.addMsgToLog(getClass().getSimpleName() + ">> Ready to receive subscriptions: " + socket.getLocalSocketAddress());
@@ -44,7 +46,8 @@ public class SubscriptionReceiver implements Runnable{
 
 			String event = new String(receivePacket.getData()).trim();
 			this.controller.addMsgToLog(getClass().getSimpleName() + ">> event received: " + event);
-			if(event.equals(SensorController.SUBSCRIBE_EVENT)){
+			System.out.println(controller.getTopic() + Constants.SUBSCRIBE_EVENT);
+			if(event.equals(controller.getTopic() + Constants.SUBSCRIBE_EVENT)){
 
 				this.controller.addSubscriber(receivePacket.getAddress());
 				this.controller.addMsgToLog(getClass().getSimpleName() + ">> added subscriber: " + receivePacket.getAddress());

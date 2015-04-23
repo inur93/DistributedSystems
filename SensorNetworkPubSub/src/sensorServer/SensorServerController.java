@@ -1,28 +1,14 @@
 package sensorServer;
 import java.net.*;
 
+import common.Broadcaster;
+import common.Constants;
+import common.Constants.Topics;
 import common.PropertyHelper;
 
 
 public class SensorServerController implements Runnable{
 	private Subscriber subscriber;
-
-	public static final int PACKET_PORT = 8889;
-	public static final int RECEIVER_PORT = 8888;
-	public static final int SUBSCRIPTION_PORT = 1234;
-	public static final int PACKET_SIZE = 512;
-	
-	public static final String DEFAULT_NAME = "192.168.255.255";// "255.255.255.255";
-	
-	public static final String TEMP_TOPIC = "TEMP;";
-	public static final String TEMP_READY = "READY;";
-	public static final String TEMP_BROADCAST_EVENT = "TEMP;READY;";
-	public static final String TEMP_SUBSCRIBE_EVENT = "TEMP;SUBSCRIBE;";
-	
-	public static final String FILE_NAME = "temperature";
-	public static final int DATA_SIZE = 5;
-
-
 	private Thread dataHandlerThread;
 	private Thread subscriberThread;
 	
@@ -31,13 +17,13 @@ public class SensorServerController implements Runnable{
 	private ServerGUI gui;
 	public volatile boolean terminate = false;
 	private DatagramSocket receiverSocket;
-	private DatagramSocket senderSocket;
-	private DatagramSocket listenerSocket;
-	public SensorServerController(){
+	private Topics topic;
+	public SensorServerController(Topics topic){
+		this.topic = topic;
 		this.gui = new ServerGUI(this);
 		new Thread(this.gui).start();
 		try {
-			this.receiverSocket = new DatagramSocket(SensorServerController.RECEIVER_PORT, InetAddress.getByName("0.0.0.0"));
+			this.receiverSocket = new DatagramSocket(Constants.SUBSCRBER_PORT, InetAddress.getByName("0.0.0.0"));
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -53,10 +39,11 @@ public class SensorServerController implements Runnable{
 
 	public void run(){
 		terminate = false;
-		this.subscriber = new Subscriber(TEMP_TOPIC, this);
+		new Thread(new Broadcaster(this.topic+";"+ Constants.SUBSCRIBE_EVENT, Constants.PUBLISHER_PORT)).start();
+		this.subscriber = new Subscriber(topic+";", this);
 		this.subscriberThread = new Thread(subscriber);
 		this.subscriberThread.start();
-		DataHandler dataHandler = new DataHandler(this, this.receiverSocket);
+		DataHandler dataHandler = new DataHandler(this, this.receiverSocket, topic + ";");
 		this.dataHandlerThread = new Thread(dataHandler);
 		this.dataHandlerThread.start();
 	}
@@ -66,19 +53,6 @@ public class SensorServerController implements Runnable{
 	}
 	public void restartServer(){
 		terminate = true;
-		
-//		try{
-//		subscriberThread.interrupt();
-//		dataHandlerThread.interrupt();
-//		}catch(Exception e){
-//			gui.addMsgToLog(getClass().getSimpleName() + ">> restarting server...");
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//		}
 		run();
 	}
 	
@@ -97,12 +71,14 @@ public class SensorServerController implements Runnable{
 		}catch(NumberFormatException e){
 			return false;
 		}		
-		PropertyHelper.writeToProperty(FILE_NAME, key, value);
+		PropertyHelper.writeToProperty(Constants.FILE_NAME, key, value);
 		return true;
 	}
 
 	public synchronized void writeToLog(String msg) {
-		this.gui.addMsgToLog(msg);
+		this.gui.addMsgToLog(msg.trim());
 	}
+	
+	
 	
 }

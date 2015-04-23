@@ -5,6 +5,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.LinkedList;
 
+import common.Constants;
+
 public class Publisher extends Thread{
 
 	private SensorController controller;
@@ -16,12 +18,12 @@ public class Publisher extends Thread{
 
 
 	public void publish(String event){
-		byte[] data = (SensorController.TEMP_TOPIC + event).getBytes();
+		byte[] data = (event).getBytes();
 		LinkedList<InetAddress> addresses = this.controller.getSubscribers();
 		if(!addresses.isEmpty()){
 			for(InetAddress address : addresses){
 				try{
-					DatagramPacket packet = new DatagramPacket(data, data.length, address, SensorController.PACKET_PORT);
+					DatagramPacket packet = new DatagramPacket(data, data.length, address, Constants.SUBSCRBER_PORT);
 					socket.send(packet);
 				}catch(Exception e){
 					e.printStackTrace();

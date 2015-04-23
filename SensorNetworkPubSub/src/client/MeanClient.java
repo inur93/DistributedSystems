@@ -19,7 +19,7 @@ public class MeanClient implements IMeanClient {
 		mc.run();
 	}
 
-	private void run() {
+	public void run() {
 		showGui();
 		connectServer();
 	}

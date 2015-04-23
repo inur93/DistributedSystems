@@ -5,6 +5,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.LinkedList;
 
+import common.Broadcaster;
+import common.Constants;
+import common.Constants.Topics;
+
+
 public class SensorController implements Runnable {
 	public volatile LinkedList<String> queue = new LinkedList<String>();
 	private volatile LinkedList<InetAddress> subscribers = new LinkedList<InetAddress>(); 
@@ -15,30 +20,20 @@ public class SensorController implements Runnable {
 	
 	public volatile boolean terminate = false;
 
-	public static final String DEFAULT_NAME =  "192.168.10.255";//"255.255.255.255"; //
-	public static final int RECEIVER_PORT = 8889;
-	public static final int PACKET_PORT = 8888;
 
-	public static final String FILE_NAME = "temperature";
-	
-	public static final String TEMP_TOPIC = "TEMP;";
+	private Topics topic;
 
-	public static final String BROADCAST_EVENT = "TEMP;READY;";
-	
-	public static final String SUBSCRIBE_EVENT = "TEMP;SUBSCRIBE;";
-
-	public static final int PACKET_SIZE = 512;
-	public static final int DATA_SIZE = 5;
 
 	private volatile DatagramSocket senderSocket;
 	private volatile DatagramSocket receiverSocket;
 
-	public SensorController() {
+	public SensorController(Topics topic) {
+		this.topic = topic;
 		this.gui = new SensorGUI(this);
 		new Thread(this.gui).start();
 		try {
 			this.senderSocket = new DatagramSocket();
-			this.receiverSocket = new DatagramSocket(RECEIVER_PORT);
+			this.receiverSocket = new DatagramSocket(Constants.PUBLISHER_PORT);
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -57,8 +52,8 @@ public class SensorController implements Runnable {
 		while(!queue.isEmpty() && !subscribers.isEmpty()){
 			
 			String val =this.queue.pop();
-			addMsgToLog(getClass().getSimpleName() + ">> publish: " + val);
-			this.publisher.publish(val);
+			addMsgToLog(getClass().getSimpleName() + ">> publish: " + getTopic() + val);
+			this.publisher.publish(getTopic() + val);
 			
 		}
 		}catch(Exception e){
@@ -76,7 +71,7 @@ public class SensorController implements Runnable {
 		new Thread(this.subscriptionReceiver).start();
 		
 		
-		new Thread(new Broadcaster(this)).start();
+		new Thread(new Broadcaster(getTopic() + Constants.READY_EVENT, Constants.SUBSCRBER_PORT)).start();
 
 		//10 threads generating data
 		this.datagenThread = new Thread[10];
@@ -93,7 +88,7 @@ public class SensorController implements Runnable {
 
 	}
 	public synchronized void addMsgToLog(String msg){
-		this.gui.addMsgToLog(msg);
+		this.gui.addMsgToLog(msg.trim());
 	}
 	
 	public void shutdownSensor() {
@@ -111,6 +106,10 @@ public class SensorController implements Runnable {
 	private void closeSockets(){
 		if(this.receiverSocket != null && !this.receiverSocket.isClosed()) this.receiverSocket.close();
 		if(this.senderSocket != null && !this.receiverSocket.isClosed()) this.senderSocket.close();
+	}
+	
+	public String getTopic(){
+		return this.topic + ";";
 	}
 
 }

@@ -4,7 +4,6 @@ import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
 
 import common.ICalculator;
@@ -50,21 +49,5 @@ public class Calculator implements ICalculator {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
-
-
-//	@Override
-//	public Timestamp getTimestamp() throws RemoteException {
-//		return PropertyHelper.getFileTimestamp();
-//	}
-	
-//	public static void main(String[] args) throws RemoteException{
-//		Calculator c = new Calculator();
-//		double mean = c.calculateMean();
-//		System.out.println("mean: " + mean);
-//	}
-	
-	
-
 }
