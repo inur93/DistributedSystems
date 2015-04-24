@@ -13,9 +13,11 @@ import java.net.InetAddress;
 public class Broadcaster implements Runnable{
 	private String event;
 	private int destinationPort;
-	public Broadcaster(String event, int destinationPort){
+	private ILog log;
+	public Broadcaster(String event, int destinationPort, ILog log){
 		this.event = event;
 		this.destinationPort = destinationPort;
+		this.log = log;
 	}
 	@Override
 	public void run() {
@@ -28,9 +30,9 @@ public class Broadcaster implements Runnable{
 
 			packet = new DatagramPacket(data, data.length, InetAddress.getByName(Constants.DEFAULT_NAME), destinationPort);
 			socket.send(packet);
-			System.err.println("broadcast data: " + new String(packet.getData()));
+			this.log.addMsg(getClass().getSimpleName() + "broadcast data: " + new String(packet.getData()));
 		}catch(IOException e){
-			System.err.println(getClass().getName() + ">> broadcast packet failed");
+			this.log.addMsg(getClass().getSimpleName() + ">> broadcast packet failed");
 		}	
 	}
 }

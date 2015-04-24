@@ -46,7 +46,6 @@ public class SubscriptionReceiver implements Runnable{
 
 			String event = new String(receivePacket.getData()).trim();
 			this.controller.addMsgToLog(getClass().getSimpleName() + ">> event received: " + event);
-			System.out.println(controller.getTopic() + Constants.SUBSCRIBE_EVENT);
 			if(event.equals(controller.getTopic() + Constants.SUBSCRIBE_EVENT)){
 
 				this.controller.addSubscriber(receivePacket.getAddress());
@@ -54,10 +53,6 @@ public class SubscriptionReceiver implements Runnable{
 				break;
 			}
 		}
-
-//		if(socket != null) {
-//			socket.close();
-//		}
 
 
 	}

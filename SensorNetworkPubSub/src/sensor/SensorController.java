@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.LinkedList;
 
+import sensor.gui.SensorGUI;
 import common.Broadcaster;
 import common.Constants;
 import common.Constants.Topics;
@@ -13,7 +14,7 @@ import common.Constants.Topics;
 public class SensorController implements Runnable {
 	public volatile LinkedList<String> queue = new LinkedList<String>();
 	private volatile LinkedList<InetAddress> subscribers = new LinkedList<InetAddress>(); 
-	private SensorGUI gui;
+	private SensorGUI log;
 	private Thread[] datagenThread;
 	private Publisher publisher;
 	private SubscriptionReceiver subscriptionReceiver;
@@ -29,8 +30,8 @@ public class SensorController implements Runnable {
 
 	public SensorController(Topics topic) {
 		this.topic = topic;
-		this.gui = new SensorGUI(this);
-		new Thread(this.gui).start();
+		this.log = new SensorGUI(this);
+		new Thread(this.log).start();
 		try {
 			this.senderSocket = new DatagramSocket();
 			this.receiverSocket = new DatagramSocket(Constants.PUBLISHER_PORT);
@@ -71,7 +72,7 @@ public class SensorController implements Runnable {
 		new Thread(this.subscriptionReceiver).start();
 		
 		
-		new Thread(new Broadcaster(getTopic() + Constants.READY_EVENT, Constants.SUBSCRBER_PORT)).start();
+		new Thread(new Broadcaster(getTopic() + Constants.READY_EVENT, Constants.SUBSCRBER_PORT, this.log)).start();
 
 		//10 threads generating data
 		this.datagenThread = new Thread[10];
@@ -88,7 +89,7 @@ public class SensorController implements Runnable {
 
 	}
 	public synchronized void addMsgToLog(String msg){
-		this.gui.addMsgToLog(msg.trim());
+		this.log.addMsg(msg.trim());
 	}
 	
 	public void shutdownSensor() {
