@@ -112,11 +112,11 @@ public abstract class PropertyHelper {
 		//		System.out.println("3: " + p.readFromProperty("test", "key1"));
 	}
 
-	public synchronized static int findLastIndex() {
+	public synchronized static int findLastIndex(String filename) {
 		lock.readLock().lock();
 		int i = 0;
 		while(true){
-			if(readFromProperty("temperature", String.valueOf(i)) == null) {
+			if(readFromProperty(filename, String.valueOf(i)) == null) {
 				lock.readLock().unlock();
 				return i;
 			}

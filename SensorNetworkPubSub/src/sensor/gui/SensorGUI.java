@@ -7,7 +7,7 @@ import javax.swing.JButton;
 
 import common.ILog;
 
-import sensor.SensorController;
+import sensor.Publisher;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -18,10 +18,10 @@ public class SensorGUI extends JFrame implements ILog, ActionListener, Runnable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private SensorController controller;
+	private Publisher controller;
 	private ArrayList<String> logData = new ArrayList<String>();
 	private JList<Object> sensorLog;
-	public SensorGUI(SensorController controller) {
+	public SensorGUI(Publisher controller) {
 		this.controller = controller;
 		getContentPane().setLayout(null);
 		setTitle("sensor log");

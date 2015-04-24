@@ -10,8 +10,9 @@ public class Constants {
 	public static final String FILE_NAME = "temperature";
 	
 	public static enum Topics{TEMP, LIGHT};
-	public static final String READY_EVENT = "READY;";
-	public static final String SUBSCRIBE_EVENT = "SUBSCRIBE;";
+	public static final String READY_EVENT = "READY";
+	public static final String SUBSCRIBE_VALUE = "SUBSCRIBE";
+	public static final String UNSUBSCRIBE_VALUE = "UNSUBSCRIBE";
 
 	public static final int PACKET_SIZE = 512;
 	public static final int DATA_SIZE = 5;

@@ -1,8 +1,8 @@
 
 
+import common.Constants;
 import common.Constants.Topics;
-
-import sensor.SensorController;
+import sensor.Sensor;
 
 /**
  * 
@@ -12,8 +12,10 @@ import sensor.SensorController;
 public class SensorMain {
 
 	public static void main(String[] args) {
-			SensorController s = new SensorController(Topics.TEMP);
-			new Thread(s).start();
+			Sensor s1 = new Sensor(Topics.TEMP.toString(), Constants.PUBLISHER_PORT);
+			new Thread(s1).start();
+			Sensor s2 = new Sensor(Topics.LIGHT.toString(), Constants.PUBLISHER_PORT+1);
+			new Thread(s2).start();
 	}
 
 }

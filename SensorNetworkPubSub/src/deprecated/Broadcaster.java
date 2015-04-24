@@ -1,9 +1,13 @@
-package common;
+package deprecated;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+
+import common.Constants;
+import common.Event;
+import common.ILog;
 
 /**
  * 
@@ -14,9 +18,9 @@ public class Broadcaster implements Runnable{
 	private String event;
 	private int destinationPort;
 	private ILog log;
-	public Broadcaster(String event, int destinationPort, ILog log){
-		this.event = event;
-		this.destinationPort = destinationPort;
+	public Broadcaster(Event event, ILog log){
+		this.event = event.getEventStr();
+		this.destinationPort = event.port;
 		this.log = log;
 	}
 	@Override

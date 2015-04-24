@@ -3,10 +3,10 @@ package sensor;
 import java.util.Random;
 
 public class DataGenerator extends Thread{
-	SensorController ctrl;
+	Sensor ctrl;
 
-	public DataGenerator(SensorController clientController) {
-		this.ctrl = clientController;
+	public DataGenerator(Sensor controller) {
+		this.ctrl = controller;
 	}
 	@Override
 	public void run() {
@@ -15,8 +15,8 @@ public class DataGenerator extends Thread{
 				try {
 					sleep(3000);
 					String data = measure();
-					ctrl.queue.push(data);
-					ctrl.publish();
+					ctrl.pushData(data);
+					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 
@@ -38,9 +38,7 @@ public class DataGenerator extends Thread{
 
 	// Convert to char array, in format '_''x''y''.''z''_'
 	String convert(float temp) {
-		String tempString = String.format("%.2f", temp) + ";";
-
-		return tempString;
+		return String.format("%.2f", temp);
 	}
 
 

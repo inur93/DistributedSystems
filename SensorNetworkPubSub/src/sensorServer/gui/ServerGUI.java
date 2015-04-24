@@ -7,7 +7,7 @@ import javax.swing.JButton;
 
 import common.ILog;
 
-import sensorServer.SensorServerController;
+import sensorServer.Subscriber;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -21,9 +21,9 @@ public class ServerGUI extends JFrame implements ILog, ActionListener, Runnable{
 	private static final long serialVersionUID = 1L;
 	private JList<Object> serverLog;
 	private ArrayList<String> logData = new ArrayList<String>();
-	private SensorServerController controller;
+	private Subscriber controller;
 	
-	public ServerGUI(SensorServerController controller) {
+	public ServerGUI(Subscriber controller) {
 		this.controller = controller;
 		getContentPane().setLayout(null);
 		setTitle("Server log");
