@@ -20,7 +20,7 @@ public class Broadcaster implements Runnable{
 	private ILog log;
 	public Broadcaster(Event event, ILog log){
 		this.event = event.getEventStr();
-		this.destinationPort = event.port;
+//		this.destinationPort = event.port;
 		this.log = log;
 	}
 	@Override

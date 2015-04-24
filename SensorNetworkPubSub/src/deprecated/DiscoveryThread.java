@@ -1,4 +1,4 @@
-package common;
+package deprecated;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

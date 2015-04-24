@@ -6,11 +6,12 @@ import javax.swing.JList;
 import javax.swing.JButton;
 
 import common.ILog;
-
 import sensor.Publisher;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 public class SensorGUI extends JFrame implements ILog, ActionListener, Runnable{
@@ -21,13 +22,19 @@ public class SensorGUI extends JFrame implements ILog, ActionListener, Runnable{
 	private Publisher controller;
 	private ArrayList<String> logData = new ArrayList<String>();
 	private JList<Object> sensorLog;
-	public SensorGUI(Publisher controller) {
+	public SensorGUI(Publisher controller, String title) {
 		this.controller = controller;
 		getContentPane().setLayout(null);
-		setTitle("sensor log");
+		setTitle(title);
 		setBounds(600, 100, 500, 680);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent event){
+				terminate();
+			}
+		});
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(12, 13, 458, 571);
@@ -48,6 +55,11 @@ public class SensorGUI extends JFrame implements ILog, ActionListener, Runnable{
 		btnShutdown.setBounds(305, 597, 165, 25);
 		getContentPane().add(btnShutdown);
 		// TODO Auto-generated constructor stub
+	}
+
+	private synchronized void terminate() {
+		controller.shutdownSensor();;
+		System.exit(0);
 	}
 
 	@Override

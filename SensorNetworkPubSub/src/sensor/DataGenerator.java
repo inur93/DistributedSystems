@@ -10,13 +10,13 @@ public class DataGenerator extends Thread{
 	}
 	@Override
 	public void run() {
-		while(!this.ctrl.terminate){
+		while(!this.ctrl.isTerminated()){
 			synchronized (this) {
 				try {
 					sleep(3000);
 					String data = measure();
 					ctrl.pushData(data);
-					
+
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 

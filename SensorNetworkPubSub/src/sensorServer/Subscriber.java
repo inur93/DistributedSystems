@@ -8,72 +8,103 @@ import common.PropertyHelper;
 import common.Receiver;
 import common.Sender;
 import common.Event;
+import common.Topic;
 
 
 public class Subscriber implements Runnable, ISubscriber, IController{
 	private Receiver receiver;
 	private Sender sender;
 	private Thread receiverThread;
-	private Thread senderThread;
 	private ServerGUI log;
-	private int publisherPort;
-	
-	public volatile boolean terminate = false;
+	private int listenerPort;
+
+	private volatile boolean terminated;
+
 	private DatagramSocket receiverSocket;
-	private ArrayList<String> topics = new ArrayList<>();
-	
-	public Subscriber(String topic, int listenerPort, int publisherPort){
-		this.topics.add(topic);
-		this.publisherPort = publisherPort;
+	private DatagramSocket senderSocket;
+	private ArrayList<Topic> topics = new ArrayList<>();
+
+	public Subscriber(Topic[] topics, int listenerPort){
+		if(topics != null) {
+			for(Topic t : topics){
+			this.topics.add(t);
+			}
+		}
+		this.listenerPort = listenerPort;
 		this.log = new ServerGUI(this);
 		new Thread(this.log).start();
+
+	}
+
+	public void run(){
+		terminated = false;
 		try {
 			this.receiverSocket = new DatagramSocket(listenerPort, InetAddress.getByName("0.0.0.0"));
+			this.senderSocket = new DatagramSocket();
 		} catch (SocketException e) {
 			this.log.addMsg(getClass().getSimpleName() + ">> socket exception");
 		} catch (UnknownHostException e) {
 			this.log.addMsg(getClass().getSimpleName()+ ">> unknown host exception");
 		}
-	}
-	
-	public void sendSubscription(InetAddress address){
-		
-	}
-
-	public void run(){
-		terminate = false;
-		this.sender = new Sender(this.log);
-		this.senderThread = new Thread(sender);
-		this.senderThread.start();
-		this.sender.send(new Event(this.topics.get(0), Constants.SUBSCRIBE_VALUE, this.publisherPort, true));
+		this.sender = new Sender(this.senderSocket, this.log);
+		broadcast();
 		this.receiver = new Receiver(this, this.log, this.receiverSocket);
 		this.receiverThread = new Thread(this.receiver);
 		this.receiverThread.start();
+		while(!this.terminated){
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				this.log.addMsg(getClass().getSimpleName() + ">> interrupted broadcast sleep");
+			}
+			broadcast();
+		}
 	}
-	
-	public void shutDownServer(){
+
+	private void broadcast(){
+		for(Topic t : this.topics){
+			this.sender.send(new Event(t, Constants.SUBSCRIBE_VALUE, t.port, true));
+		}
+	}
+
+	public void shutDown(){
+		terminated = true;
+		for(Topic t : topics){
+			this.sender.send(new Event(t, Constants.UNSUBSCRIBE_VALUE,  t.port, true));
+		}
 		this.receiver.terminate();
+		while(this.receiverThread.isAlive());
+		this.receiverSocket.close();
+		log.addMsg(getClass().getSimpleName()+ ">> shutdown");
 	}
 	public void restartServer(){
-		this.receiver.terminate();
+		shutDown();
+		log.addMsg(getClass().getSimpleName()+">> restarting...");
 		run();
 	}
-	
+
 	@Override
 	public synchronized void receiveEvent(Event event){
-		String topic = event.topic;
+		String topic = event.topic.topic;
 		String value = event.value;
 		int key = PropertyHelper.findLastIndex(topic);
-			if(topics.contains(topic)){
-				if(value.matches("\\d{2}.\\d{2}")){
-					writeToProperty(topic, String.valueOf(key), value.replace(";", ""));
-					key++;
-				}else if(value.contains(Constants.READY_EVENT.replace(";", ""))){
-					this.log.addMsg(getClass().getSimpleName() + " >> Sending event to: " + event.address);
-					Event sendEvent = new Event(topic, value, event.address, publisherPort);
-					subscribe(sendEvent);
-				}
+		if(checkTopic(topic)){
+			if(value.matches(Constants.TEMP_DATA_VALUE)){
+				writeToProperty(topic, String.valueOf(key), value.replace(";", ""));
+				key++;
+			}else if(value.contains(Constants.READY_VALUE)){
+				this.log.addMsg(getClass().getSimpleName() + " >> Sending event to: " + event.address);
+				Event sendEvent = new Event(event.topic, Constants.SUBSCRIBE_VALUE, event.address, event.topic.port);
+				subscribe(sendEvent);
 			}
+		}
+	}
+
+	private synchronized boolean checkTopic(String topic){
+		for(Topic t : topics){
+			if(t.topic.equals(topic)) return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -86,9 +117,9 @@ public class Subscriber implements Runnable, ISubscriber, IController{
 	public void unsubscribe(Event event) {
 		event.value = Constants.UNSUBSCRIBE_VALUE;
 		this.sender.send(event);;
-		
+
 	}
-	
+
 	/**
 	 * verifies input and write data to file
 	 * @param key should be integer so the index can be used for calculating total and mean
@@ -105,15 +136,18 @@ public class Subscriber implements Runnable, ISubscriber, IController{
 		PropertyHelper.writeToProperty(filename, key, value);
 		return true;
 	}
-	
-	public synchronized void addTopic(String topic){
-		topics.add(topic);
-		sender.send(new Event(topic, Constants.SUBSCRIBE_VALUE, publisherPort+1, true));
+
+	public synchronized void addTopic(Topic topic){
+		if(topic != null){
+			System.out.println(topic);
+			topics.add(topic);
+			sender.send(new Event(topic, Constants.SUBSCRIBE_VALUE, topic.port, true));
+		}
 	}
 	public synchronized void removeTopic(String topic){
 		topics.remove(topic);
 	}
-	
 
-		
+
+
 }

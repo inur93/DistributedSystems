@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.text.DecimalFormat;
 
-import common.ICalculator;
 import common.PropertyHelper;
 
 public class Calculator implements ICalculator {

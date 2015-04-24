@@ -6,8 +6,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import rmiServer.ICalculator;
 import client.ClientWindow.ConnectionStatus;
-import common.ICalculator;
 
 public class MeanClient implements IMeanClient {
 

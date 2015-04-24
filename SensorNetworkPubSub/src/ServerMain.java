@@ -4,11 +4,9 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 import rmiServer.Calculator;
+import rmiServer.ICalculator;
 import sensorServer.SensorServer;
-import sensorServer.Subscriber;
-import common.Constants;
-import common.ICalculator;
-import common.Constants.Topics;
+import common.Topic;
 
 
 public class ServerMain {
@@ -27,7 +25,7 @@ public class ServerMain {
 		System.out.println("RMIServer started");
 		
 		//Start sensor server
-		SensorServer sensorServer = new SensorServer(new String[]{Topics.TEMP.toString(), Topics.LIGHT.toString()});
+		SensorServer sensorServer = new SensorServer(new Topic[]{new Topic("TEMP", 8900),new Topic("LIGHT", 8901)});
 		Thread sensorServerThread = new Thread(sensorServer);
 		sensorServerThread.start();
 		System.out.println("Sensor Server started");

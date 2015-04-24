@@ -3,6 +3,8 @@ package sensor;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.LinkedList;
 
 import sensor.gui.SensorGUI;
@@ -11,44 +13,74 @@ import common.Constants;
 import common.Receiver;
 import common.Event;
 import common.Sender;
+import common.Subscription;
+import common.Topic;
 
 
 public class Publisher implements Runnable, IPublisher, IController{
+	public boolean terminate;
+	
 	public volatile LinkedList<Event> queue = new LinkedList<Event>();
-	private volatile LinkedList<InetAddress> subscribers = new LinkedList<InetAddress>(); 
+	private volatile LinkedList<Subscription> subscribers = new LinkedList<Subscription>(); 
 	private SensorGUI log;
 
 	private Receiver receiver;
+	private Thread  receiverThread;
 	private Sender sender;
 
-	public volatile boolean terminate = false;
-
-
-	private String topic;
+	private Topic topic;
 	private int subscriberPort;
 
 	private volatile DatagramSocket senderSocket;
 	private volatile DatagramSocket receiverSocket;
 
-	public Publisher(String topic, int listenerPort, int subscriberPort) {
+	public Publisher(Topic topic, int subscriberPort) {
 		this.topic = topic;
 		this.subscriberPort = subscriberPort;
-		this.log = new SensorGUI(this);
+		this.log = new SensorGUI(this, "Publisher: " + topic);
 		new Thread(this.log).start();
+		
+	}
+
+	public void run(){
+		terminate = false;
 		try {
 			this.senderSocket = new DatagramSocket();
-			this.receiverSocket = new DatagramSocket(listenerPort);
+			this.receiverSocket = new DatagramSocket(topic.port);
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.addMsg(getClass().getSimpleName() + ">> can not continue. port is already in use");
 		}
+		log.addMsg(getClass().getSimpleName() + ">> listening on port: " + topic.port);
+		
+		//One thread for receiving data	
+		this.receiver = new Receiver(this, log, receiverSocket);
+		receiverThread = new Thread(this.receiver);
+		receiverThread.start();
+
+		//One thread for sending data
+		this.sender = new Sender(senderSocket, this.log);
+		this.sender.send(new Event(this.topic, Constants.READY_VALUE, subscriberPort, true));
+
+
 	}
+	
 	@SuppressWarnings("unchecked")
-	public synchronized LinkedList<InetAddress> getSubscribers(){
-		return (LinkedList<InetAddress>) this.subscribers.clone();
+	public synchronized LinkedList<Subscription> getSubscribers(){
+		return (LinkedList<Subscription>) this.subscribers.clone();
 	}
 	public synchronized void addSubscriber(InetAddress socketAddress){
-		if(!subscribers.contains(socketAddress)) subscribers.add(socketAddress);
+		boolean updated = false;
+		for(Subscription s : subscribers){
+			if(s.address.equals(socketAddress)){
+				s.timestamp = new Timestamp(new Date().getTime());
+				log.addMsg(getClass().getSimpleName() + ">> updated subscriber: " + socketAddress);
+				updated = true;
+			}
+		}
+		if(!updated) {
+			subscribers.add(new Subscription(socketAddress, new Timestamp(new Date().getTime())));
+			log.addMsg(getClass().getSimpleName() + ">> added subscriber: " + socketAddress);
+		}
 	}
 	
 	public synchronized void removeSubscriber(InetAddress address){
@@ -59,39 +91,31 @@ public class Publisher implements Runnable, IPublisher, IController{
 
 		queue.add(event);
 		while(!queue.isEmpty() && !subscribers.isEmpty()){
-			for(InetAddress address : subscribers){
+			for(Subscription s : subscribers){
 				Event e = queue.pop();
-				e.address = address;
-				e.port = this.subscriberPort;
+				e.address = s.address;
 				sender.send(e);
+				if(new Timestamp(new Date().getTime()).getTime() - s.timestamp.getTime() > 1000*30 ){ // 1000*60*5
+					subscribers.remove(s);
+					this.log.addMsg(getClass().getSimpleName() + ">> removed: " + s.toString());
+				}
 			}
 
 		}
 
 	}
-	public void run(){
-		//One thread for receiving data	
-		this.receiver = new Receiver(this, log, receiverSocket);
-		new Thread(this.receiver).start();
-
-		//One thread for sending data
-		this.sender = new Sender(this.log);
-		new Thread(this.sender).start();
-		this.sender.send(new Event(this.topic, Constants.READY_EVENT, this.subscriberPort, true));
-
-
-	}
 
 
 	public void shutdownSensor() {
-		terminate = true;
+		this.terminate = true;
+		this.receiver.terminate();
 		closeSockets();
+		while(this.receiverThread.isAlive()){};
 		this.log.addMsg("shutdown");
 	}
 	public void restartSensor() {
-		terminate = true;
-		closeSockets();
-		this.log.addMsg("restarting");
+		shutdownSensor();
+		this.log.addMsg("restarting...");
 		run();
 	}
 
@@ -103,13 +127,10 @@ public class Publisher implements Runnable, IPublisher, IController{
 
 	@Override
 	public void receiveEvent(Event event) {
-		this.log.addMsg(getClass().getSimpleName() + ">> event received: " + event.toString());
-		if(event.topic.equals(this.topic)){
-				log.addMsg(getClass().getSimpleName() + ">> topic match: " + event.topic);
+		if(event.topic.topic.equals(this.topic.topic)){
 				log.addMsg("matching: " + event.value + " : " + Constants.SUBSCRIBE_VALUE);
 			if(event.value.equals(Constants.SUBSCRIBE_VALUE)){
-				addSubscriber(event.address);
-				log.addMsg(getClass().getSimpleName() + ">> added subscriber: " + event.address);	
+				addSubscriber(event.address);	
 			}else if(event.value.equals(Constants.UNSUBSCRIBE_VALUE)){
 				removeSubscriber(event.address);
 				log.addMsg(getClass().getSimpleName() + ">> removed subscriber: " + event.address);	

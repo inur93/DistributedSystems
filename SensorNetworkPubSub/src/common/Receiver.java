@@ -7,13 +7,23 @@ import java.net.SocketException;
 
 import sensorServer.IController;
 
-
+/**
+ * 
+ * @author Runi
+ *	Simple receiver class taking a IController as argument to be able to return data.
+ */
 public class Receiver implements Runnable{
 
-	private volatile boolean terminate = false;
+	private volatile boolean terminate = false; // stops while loop if true
 	private IController controller;
 	private DatagramSocket socket;
 	private ILog log;
+	/**
+	 * 
+	 * @param controller to which data is returned
+	 * @param log for easier overview and debugging
+	 * @param socket
+	 */
 	public Receiver(IController controller, ILog log, DatagramSocket socket) {
 		this.controller = controller;
 		this.socket = socket;
@@ -23,9 +33,6 @@ public class Receiver implements Runnable{
 
 	@Override
 	public void run() {
-
-
-
 		try {
 			socket.setBroadcast(true);
 		} catch (SocketException e1) {
@@ -43,23 +50,27 @@ public class Receiver implements Runnable{
 			}
 
 			String dataMsg = new String(receivePacket.getData()).trim();
-			this.log.addMsg(getClass().getSimpleName() + ">> data received: " + dataMsg);
+			
 
 			
 			dataMsg = dataMsg.replace(",", ".");
 			String[] eventStr = dataMsg.split(";");
 			String topic = "";
 			String value = "";
+			int port = 0;
 			try{
 				topic = eventStr[0];
 				value = eventStr[1];
+				port = Integer.valueOf(eventStr[2]);
 			}catch(IndexOutOfBoundsException e){
 				log.addMsg(getClass() + ">> invalid event received: " + dataMsg);
+			}catch(NumberFormatException e1){
+				port = 0;
 			}
-			
-			
-			
-			Event event = new Event(topic, value, receivePacket.getAddress(), receivePacket.getPort());
+			if(value.equals(Constants.SUBSCRIBE_VALUE) || value.equals(Constants.READY_VALUE)){
+				this.log.addMsg(getClass().getSimpleName() + ">> data received: " + dataMsg);
+			}
+			Event event = new Event(new Topic(topic, port), value, receivePacket.getAddress(), receivePacket.getPort());
 			controller.receiveEvent(event);	
 		}
 	}

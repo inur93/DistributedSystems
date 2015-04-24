@@ -6,11 +6,12 @@ import javax.swing.JList;
 import javax.swing.JButton;
 
 import common.ILog;
-
 import sensorServer.Subscriber;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 public class ServerGUI extends JFrame implements ILog, ActionListener, Runnable{
@@ -26,8 +27,14 @@ public class ServerGUI extends JFrame implements ILog, ActionListener, Runnable{
 	public ServerGUI(Subscriber controller) {
 		this.controller = controller;
 		getContentPane().setLayout(null);
-		setTitle("Server log");
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setTitle("Subscriber log");
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent event){
+				terminate();
+			}
+		});
 		setBounds(100, 100, 500, 680);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setViewportBorder(null);
@@ -55,7 +62,7 @@ public class ServerGUI extends JFrame implements ILog, ActionListener, Runnable{
 	public void actionPerformed(ActionEvent e) {
 		switch(e.getActionCommand()){
 		case "shutdown":
-			controller.shutDownServer();
+			controller.shutDown();
 			break;
 		case "restart":
 			controller.restartServer();
@@ -74,5 +81,9 @@ public class ServerGUI extends JFrame implements ILog, ActionListener, Runnable{
 	public void run() {
 		this.setVisible(true);
 		
+	}
+	private synchronized void terminate() {
+		controller.shutDown();
+		System.exit(0);
 	}
 }
