@@ -51,9 +51,10 @@ public class Subscriber implements Runnable, ISubscriber, IController{
 		this.receiver = new Receiver(this, this.log, this.receiverSocket);
 		this.receiverThread = new Thread(this.receiver);
 		this.receiverThread.start();
+		
 		while(!this.terminated){
 			try {
-				Thread.sleep(10000);
+				Thread.sleep(Constants.SUBSCRIPTION_BROADCAST_INTERVAL);
 			} catch (InterruptedException e) {
 				this.log.addMsg(getClass().getSimpleName() + ">> interrupted broadcast sleep");
 			}

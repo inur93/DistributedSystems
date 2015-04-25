@@ -95,7 +95,7 @@ public class Publisher implements Runnable, IPublisher, IController{
 				Event e = queue.pop();
 				e.address = s.address;
 				sender.send(e);
-				if(new Timestamp(new Date().getTime()).getTime() - s.timestamp.getTime() > 1000*30 ){ // 1000*60*5
+				if(new Timestamp(new Date().getTime()).getTime() - s.timestamp.getTime() > Constants.SUBSCRIPTION_TIMEOUT){
 					subscribers.remove(s);
 					this.log.addMsg(getClass().getSimpleName() + ">> removed: " + s.toString());
 				}

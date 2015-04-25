@@ -1,6 +1,6 @@
 
 
-import common.Topic;
+import common.Constants;
 import sensor.Sensor;
 
 /**
@@ -11,9 +11,9 @@ import sensor.Sensor;
 public class SensorMain {
 
 	public static void main(String[] args) {
-			Sensor s1 = new Sensor(new Topic("TEMP", 8900));
+			Sensor s1 = new Sensor(Constants.TEST_TEMP_TOPIC);
 			new Thread(s1).start();
-			Sensor s2 = new Sensor(new Topic("LIGHT", 8901));
+			Sensor s2 = new Sensor(Constants.TEST_LIGHT_TOPIC);
 			new Thread(s2).start();
 	}
 

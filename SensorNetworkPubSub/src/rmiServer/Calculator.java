@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.text.DecimalFormat;
 
+import common.Constants;
 import common.PropertyHelper;
 
 public class Calculator implements ICalculator {
@@ -22,7 +23,7 @@ public class Calculator implements ICalculator {
 		int count = 0;
 		double total = 0;
 		while(true){
-			String stringVal = PropertyHelper.readFromProperty(ICalculator.fileName, String.valueOf(count));
+			String stringVal = PropertyHelper.readFromProperty(Constants.TEST_TEMP_TOPIC.topic, String.valueOf(count));
 			try{
 				total+= Double.valueOf(stringVal);
 			}catch(NumberFormatException | NullPointerException e){
