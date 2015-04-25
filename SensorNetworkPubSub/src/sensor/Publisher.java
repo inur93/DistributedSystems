@@ -17,11 +17,11 @@ import common.Subscription;
 import common.Topic;
 
 
-public class Publisher implements Runnable, IPublisher, IController{
+public class Publisher implements IPublisher, IController{
 	public boolean terminate;
 	
 	public volatile LinkedList<Event> queue = new LinkedList<Event>();
-	private volatile LinkedList<Subscription> subscribers = new LinkedList<Subscription>(); 
+	private volatile LinkedList<Subscription> subscriptions = new LinkedList<Subscription>(); 
 	private SensorGUI log;
 
 	private Receiver receiver;
@@ -66,11 +66,11 @@ public class Publisher implements Runnable, IPublisher, IController{
 	
 	@SuppressWarnings("unchecked")
 	public synchronized LinkedList<Subscription> getSubscribers(){
-		return (LinkedList<Subscription>) this.subscribers.clone();
+		return (LinkedList<Subscription>) this.subscriptions.clone();
 	}
 	public synchronized void addSubscriber(InetAddress socketAddress){
 		boolean updated = false;
-		for(Subscription s : subscribers){
+		for(Subscription s : subscriptions){
 			if(s.address.equals(socketAddress)){
 				s.timestamp = new Timestamp(new Date().getTime());
 				log.addMsg(getClass().getSimpleName() + ">> updated subscriber: " + socketAddress);
@@ -78,25 +78,25 @@ public class Publisher implements Runnable, IPublisher, IController{
 			}
 		}
 		if(!updated) {
-			subscribers.add(new Subscription(socketAddress, new Timestamp(new Date().getTime())));
+			subscriptions.add(new Subscription(socketAddress, new Timestamp(new Date().getTime())));
 			log.addMsg(getClass().getSimpleName() + ">> added subscriber: " + socketAddress);
 		}
 	}
 	
 	public synchronized void removeSubscriber(InetAddress address){
-		subscribers.remove(address);
+		subscriptions.remove(address);
 	}
 
 	public synchronized void publish(Event event){
 
 		queue.add(event);
-		while(!queue.isEmpty() && !subscribers.isEmpty()){
-			for(Subscription s : subscribers){
+		while(!queue.isEmpty() && !subscriptions.isEmpty()){
+			for(Subscription s : subscriptions){
 				Event e = queue.pop();
 				e.address = s.address;
 				sender.send(e);
 				if(new Timestamp(new Date().getTime()).getTime() - s.timestamp.getTime() > Constants.SUBSCRIPTION_TIMEOUT){
-					subscribers.remove(s);
+					subscriptions.remove(s);
 					this.log.addMsg(getClass().getSimpleName() + ">> removed: " + s.toString());
 				}
 			}
@@ -136,6 +136,11 @@ public class Publisher implements Runnable, IPublisher, IController{
 				log.addMsg(getClass().getSimpleName() + ">> removed subscriber: " + event.address);	
 			}
 		}
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return terminate;
 	}
 
 }

@@ -7,7 +7,7 @@ import common.Topic;
 public class Sensor implements Runnable {
 
 	private Thread[] datagenThread;
-	private Publisher publisher;
+	private IPublisher publisher;
 	private Topic topic;
 
 	public Sensor(Topic topic){
@@ -42,7 +42,7 @@ public class Sensor implements Runnable {
 	}
 	
 	public boolean isTerminated(){
-		return this.publisher.terminate;
+		return this.publisher.isTerminated();
 	}
 
 
