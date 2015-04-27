@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.LinkedList;
 
 import sensor.gui.SensorGUI;
-import sensorServer.IController;
 import common.Constants;
 import common.Receiver;
 import common.Event;
@@ -17,7 +16,7 @@ import common.Subscription;
 import common.Topic;
 
 
-public class Publisher implements IPublisher, IController{
+public class Publisher implements IPublisher{
 	public boolean terminate;
 	
 	public volatile LinkedList<Event> queue = new LinkedList<Event>();

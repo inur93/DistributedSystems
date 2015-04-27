@@ -5,6 +5,7 @@ import common.Topic;
 
 public class SensorServer implements Runnable{
 	private Topic[] topic;
+	private ISubscriber subscriber;
 	public SensorServer(Topic[] topic){
 		this.topic = topic;
 	}
@@ -12,8 +13,8 @@ public class SensorServer implements Runnable{
 	@Override
 	public void run() {
 	
-		Subscriber s1 = new Subscriber(this.topic, Constants.SUBSCRIBER_PORT);
-		new Thread(s1).start();
+		this.subscriber = new Subscriber(this.topic, Constants.SUBSCRIBER_PORT);
+		new Thread(this.subscriber).start();
 		
 	}
 }

@@ -11,7 +11,7 @@ import common.Event;
 import common.Topic;
 
 
-public class Subscriber implements Runnable, ISubscriber, IController{
+public class Subscriber implements Runnable, ISubscriber{
 	private Receiver receiver;
 	private Sender sender;
 	private Thread receiverThread;
