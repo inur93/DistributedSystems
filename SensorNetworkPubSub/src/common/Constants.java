@@ -16,7 +16,7 @@ public class Constants {
 	public static final String READY_VALUE = "READY";
 	public static final String SUBSCRIBE_VALUE = "SUBSCRIBE";
 	public static final String UNSUBSCRIBE_VALUE = "UNSUBSCRIBE";
-	public static final String TEMP_DATA_VALUE = "\\d{2}.\\d{2}";
+	public static final String TEMP_DATA_VALUE = "\\d{2}\\.\\d{2}";
 		
 	public static final Topic TEST_TEMP_TOPIC = new Topic("TEMP", 8900);
 	public static final Topic TEST_LIGHT_TOPIC = new Topic("LIGHT", 8901);
